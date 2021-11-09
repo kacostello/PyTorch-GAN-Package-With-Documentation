@@ -31,10 +31,10 @@ class Hyperparameter:
     batch_size = 64
     epochs = 20
     latent_size = 32
-    n_critic = 5
-    critic_size = 1024
+    n_discriminator = 5
+    discriminator_size = 1024
     generator_size = 1024
-    critic_hidden_size = 1024
+    discriminator_hidden_size = 1024
     gp_lambda = 10.0
         
 hp = Hyperparameter()
@@ -96,7 +96,7 @@ class Discriminator(nn.Module):
         nn.Conv2d(1, hp.discriminator_size / 4, 3, 2),
         nn.InstanceNorm2d(hp.discriminator_size / 4, affine=True),
         nn.LeakyReLU(0.2, inplace=True),
-        nn.Conv2d(hp.critic_size / 4, hp.discriminator_size / 2, 3, 2),
+        nn.Conv2d(hp.discriminator_size / 4, hp.discriminator_size / 2, 3, 2),
         nn.InstanceNorm2d(hp.discriminator_size / 2, affine=True),
         nn.LeakyReLU(0.2, inplace=True),   
         nn.Conv2d(hp.discriminator_size / 2, hp.discriminator_size, 3, 2),
