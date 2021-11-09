@@ -48,6 +48,12 @@ hp = Hyperparameter()
     # Load Model()
     # initialize
     # optimizer
+def get_generator_block(X_dim, h_dim):
+    torch.nn.Sequential(
+        torch.nn.Linear(X_dim, h_dim),
+        torch.nn.ReLU(),
+        torch.nn.Linear(h_dim, 1),
+)
     
 class Generator(nn.Module):
     def __init__(self):
