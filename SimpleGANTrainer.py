@@ -21,40 +21,47 @@ class TwoFiveSwitch(SuperTrainer.Switch):
 
 class SimpleGANTrainer(SuperTrainer.SuperTrainer):
     def __init__(self, generator, discriminator, latent_space_function, random_from_dataset, g_loss, d_loss, g_opt,
-                 d_opt):
+                 d_opt, sw=None):
         """Class to train a simple GAN.
         Generator and discriminator are torch model objects
         Latent_space_function(n) is a function which returns an array of n points from the latent space
         Random_from_dataset is a function which returns an array of n points from the real dataset"""
-        sw = TwoFiveSwitch()
+        if sw is None:
+            self.switch = TwoFiveSwitch()
+        else:
+            self.switch = sw
         self.dataset = random_from_dataset
         self.latent_space = latent_space_function
         SuperTrainer.SuperTrainer.__init__(self, sw, models={"G": generator, "D": discriminator},
-                                           in_functions={"G": SimpleGANTrainer.generator_input,
-                                                         "D": SimpleGANTrainer.discriminator_input},
+                                           in_functions={"G": self.generator_input,
+                                                         "D": self.discriminator_input},
                                            loss_functions={"G": g_loss, "D": d_loss},
                                            opts={"G": g_opt, "D": d_opt})
         self.losses = {"G": [], "D": []}
 
     def train(self, n_epochs, n_batch):
         for epoch in range(n_epochs):
-            sw = self.switch.switch()
-            if sw == "G":
-                gen_pred, y = self.in_functions["G"](n_batch, self.models["G"], self.models["D"], self.latent_space)
-                gen_loss = self.loss_functions["G"](gen_pred, y)
-                self.losses["G"].append(gen_loss.item())
-                self.optimizers["G"].zero_grad()
-                gen_loss.backward()
-                self.optimizers["G"].step()
-            else:
-                dis_in, y = self.in_functions["D"](n_batch, self.models["G"], self.latent_space, self.dataset)
-                dis_pred = self.models["D"](dis_in)
-                dis_loss = self.loss_functions["D"](dis_pred, y)
+            sw = self.switch.switch()  # Determine which model to train - sw will either be "D" or "G"
 
-                self.losses["D"].append(dis_loss.item())
-                self.optimizers["D"].zero_grad()
-                dis_loss.backward()
-                self.optimizers["D"].step()
+            # Both input functions return the tuple (dis_in, labels)
+            # generator_in returns (gen_out, labels) - this data is passed through D and used to train G
+            # discriminator_in returns (dis_in, labels) - this is used to train D directly
+            # For other GAN types: input functions can return whatever makes the most sense for your specific type of GAN
+            # (so controllable GAN, for instance, might want to return a classification vector as well)
+            dis_in, y = self.in_functions[sw](n_batch)
+            if sw == "G":  # If we're training the generator, we should temporarily put the discriminator in eval mode
+                self.models["D"].eval()
+            mod_pred = self.models["D"](dis_in)
+            self.models["D"].train()
+            mod_loss = self.loss_functions[sw](mod_pred, y)
+
+            # Logging for visualizers (currently only loss_by_epoch)
+            self.losses[sw].append(mod_loss.item())
+
+            # Pytorch training steps
+            self.optimizers[sw].zero_grad()
+            mod_loss.backward()
+            self.optimizers[sw].step()
 
     def eval_generator(self, in_dat):
         return self.eval("G", in_dat)
@@ -80,18 +87,15 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
     def loss_by_epoch_d(self):
         self.loss_by_epoch("D")
 
-    @staticmethod
-    def discriminator_input(n_batch, generator, lat_space, from_dat):
-        gen_in = lat_space(int(n_batch / 2))
-        gen_out = generator(gen_in)
-        dis_in = gen_out + from_dat(int(n_batch / 2))
+    def discriminator_input(self, n_batch):
+        gen_in = self.latent_space(int(n_batch / 2))
+        gen_out = self.models["G"](gen_in)
+        dis_in = gen_out + self.dataset(int(n_batch / 2))
         y = [0 for n in range(int(n_batch / 2))] + [1 for n in range(int(n_batch / 2))]
         return dis_in, y
 
-    @staticmethod
-    def generator_input(n_batch, generator, discriminator, lat_space):
-        gen_in = lat_space(n_batch)
-        gen_out = generator(gen_in)
-        dis_out = discriminator(gen_out)
+    def generator_input(self, n_batch):
+        gen_in = self.latent_space(n_batch)
+        gen_out = self.models["G"](gen_in)
         y = [1 for n in range(n_batch)]
-        return dis_out, y
+        return gen_out, y

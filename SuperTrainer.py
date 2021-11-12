@@ -27,7 +27,10 @@ class SuperTrainer:
         raise NotImplementedError("Not implemented!")
 
     def eval(self, model, in_dat):
-        return self.models[model](in_dat)
+        self.models[model].eval()
+        out = self.models[model](in_dat)
+        self.models[model].train()
+        return out
 
     def loss_by_epoch(self, model):  # TODO: format the graph nicely
         model_loss = self.losses[model]
