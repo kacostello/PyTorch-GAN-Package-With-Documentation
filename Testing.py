@@ -5,7 +5,7 @@ import numpy as np
 
 
 def runGan():
-    data = pd.read_csv('C:\\Users\\Ryana\\Documents\\WPI\\Senior\\MQP\\pytorch_GAN_Package\\winequality-white.csv', sep=";")
+    data = pd.read_csv('.\\pytorch_GAN_Package\\winequality-white.csv', sep=";")
     print(np.shape(data))
     print(data)
     data = data.to_numpy()
