@@ -89,7 +89,9 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
 
     def discriminator_input(self, n_batch):
         gen_in = self.latent_space(int(n_batch / 2))
+        self.models["G"].eval()
         gen_out = self.models["G"](gen_in)
+        self.models["G"].train()
         dis_in = gen_out + self.dataset(int(n_batch / 2))
         y = [0 for n in range(int(n_batch / 2))] + [1 for n in range(int(n_batch / 2))]
         return dis_in, y
