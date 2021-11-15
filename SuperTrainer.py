@@ -1,12 +1,7 @@
 import matplotlib.pyplot as plt
 
 
-class Switch:
-    def __init__(self):
-        pass
 
-    def switch(self):
-        raise NotImplementedError("Not implemented!")
 
 
 class SuperTrainer:

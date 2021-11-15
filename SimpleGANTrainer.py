@@ -1,22 +1,7 @@
 import SuperTrainer
+import Switches
 
 
-class TwoFiveSwitch(SuperTrainer.Switch):
-    """Implementation of Switch which follows a simple 2-5 ratio rule: Train G for 2 epochs, and D for 5."""
-
-    def __init__(self):
-        SuperTrainer.Switch.__init__(self)
-        self.state = 0
-
-    def switch(self):
-        if self.state < 2:
-            self.state += 1
-            return "G"
-        else:
-            self.state += 1
-            if self.state >= 7:
-                self.state = 0
-            return "D"
 
 
 class SimpleGANTrainer(SuperTrainer.SuperTrainer):
@@ -27,7 +12,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
         Latent_space_function(n) is a function which returns an array of n points from the latent space
         Random_from_dataset is a function which returns an array of n points from the real dataset"""
         if sw is None:
-            self.switch = TwoFiveSwitch()
+            self.switch = Switches.TwoFiveSwitch()
         else:
             self.switch = sw
         self.dataset = random_from_dataset
