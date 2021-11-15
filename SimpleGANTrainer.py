@@ -1,7 +1,6 @@
 import SuperTrainer
 import Switches
-
-
+import torch
 
 
 class SimpleGANTrainer(SuperTrainer.SuperTrainer):
@@ -72,17 +71,17 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
     def loss_by_epoch_d(self):
         self.loss_by_epoch("D")
 
-    def discriminator_input(self, n_batch):
+    def discriminator_input(self, n_batch):  # TODO: This only actually supports even n_batch sizes - odd batch sizes result in off-by-one error
         gen_in = self.latent_space(int(n_batch / 2))
         self.models["G"].eval()
         gen_out = self.models["G"](gen_in)
         self.models["G"].train()
-        dis_in = gen_out + self.dataset(int(n_batch / 2))
-        y = [0 for n in range(int(n_batch / 2))] + [1 for n in range(int(n_batch / 2))]
+        dis_in = torch.cat((gen_out, self.dataset(int(n_batch / 2))))
+        y = torch.tensor([[0] for n in range(int(n_batch / 2))] + [[1] for n in range(int(n_batch / 2))]).float()  # TODO: used .float() here because the model I'm using to test uses floats. Find a way to automatically find the correct data type
         return dis_in, y
 
     def generator_input(self, n_batch):
         gen_in = self.latent_space(n_batch)
         gen_out = self.models["G"](gen_in)
-        y = [1 for n in range(n_batch)]
+        y = torch.tensor([[1] for n in range(n_batch)]).float()
         return gen_out, y
