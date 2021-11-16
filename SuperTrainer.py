@@ -16,7 +16,8 @@ class SuperTrainer:
         self.in_functions = in_functions
         self.loss_functions = loss_functions
         self.optimizers = opts
-        self.losses = {}  # Dictionary to keep track of the losses over time of each model. Of the format {model designation: [loss0, loss1, ..., lossn]}
+        self.stats = {}  # Dictionary to keep track of the stats we want to save. Of the format {stat_name:stat_dict}
+        self.stats["losses"] = {}  #Dictionary to keep track of the model losses over time Of the format {model designation: [loss0, loss1, ..., lossn]}
 
     def train(self, n_epochs, n_batch):
         raise NotImplementedError("Not implemented!")
@@ -28,6 +29,6 @@ class SuperTrainer:
         return out
 
     def loss_by_epoch(self, model):  # TODO: format the graph nicely
-        model_loss = self.losses[model]
+        model_loss = self.stats["losses"][model]
         plt.plot(model_loss)
         plt.show()

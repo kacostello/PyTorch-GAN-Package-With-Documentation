@@ -41,7 +41,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
             mod_loss = self.loss_functions[tt](mod_pred, y)
 
             # Logging for visualizers (currently only loss_by_epoch)
-            self.losses[tt].append(mod_loss.item())
+            self.stats["losses"][tt].append(mod_loss.item())
 
             # Pytorch training steps
             self.optimizers[tt].zero_grad()
