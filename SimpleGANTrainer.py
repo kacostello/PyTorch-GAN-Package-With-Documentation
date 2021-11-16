@@ -78,7 +78,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
         gen_out = self.models["G"](gen_in)
         self.models["G"].train()
         dis_in = torch.cat((gen_out, self.dataset(int(n_batch / 2))))
-        y = torch.tensor([[0] for n in range(int(n_batch / 2))] + [[1] for n in range(int(n_batch / 2))]).float()  # TODO: used .float() here because the model I'm using to test uses floats. Find a way to automatically find the correct data type
+        y = torch.tensor([[0] for n in range(math.ceil(n_batch / 2))] + [[1] for n in range(int(n_batch / 2))]).float()  # TODO: used .float() here because the model I'm using to test uses floats. Find a way to automatically find the correct data type
         return dis_in, y
 
     def generator_input(self, n_batch):
