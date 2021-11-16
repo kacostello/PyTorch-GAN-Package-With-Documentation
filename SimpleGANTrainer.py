@@ -1,6 +1,7 @@
 import SuperTrainer
 import ToTrain
 import torch
+import math
 
 
 class SimpleGANTrainer(SuperTrainer.SuperTrainer):
@@ -71,8 +72,8 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
     def loss_by_epoch_d(self):
         self.loss_by_epoch("D")
 
-    def discriminator_input(self, n_batch):  # TODO: This only actually supports even n_batch sizes - odd batch sizes result in off-by-one error
-        gen_in = self.latent_space(int(n_batch / 2))
+    def discriminator_input(self, n_batch):
+        gen_in = self.latent_space(math.ceil(n_batch / 2))
         self.models["G"].eval()
         gen_out = self.models["G"](gen_in)
         self.models["G"].train()

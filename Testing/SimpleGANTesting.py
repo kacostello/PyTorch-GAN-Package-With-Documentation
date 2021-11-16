@@ -1,5 +1,5 @@
 from SimpleGANTrainer import SimpleGANTrainer
-from ToTrain import TwoFiveSwitch
+from ToTrain import TwoFiveRule
 import torch
 import torch.nn as nn
 import math
@@ -62,7 +62,7 @@ dis_opt = torch.optim.Adam(dis.parameters(), lr=0.001)
 gen_loss = nn.BCELoss()
 dis_loss = nn.BCELoss()
 
-sw = TwoFiveSwitch()
+sw = TwoFiveRule()
 
 gan = SimpleGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, gen_opt, dis_opt, sw)
 gan.train(7000, 16)
