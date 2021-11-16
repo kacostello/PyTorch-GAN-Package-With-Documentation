@@ -1,19 +1,19 @@
 import SuperTrainer
-import Switches
+import ToTrain
 import torch
 
 
 class SimpleGANTrainer(SuperTrainer.SuperTrainer):
     def __init__(self, generator, discriminator, latent_space_function, random_from_dataset, g_loss, d_loss, g_opt,
-                 d_opt, sw=None):
+                 d_opt, tt=None):
         """Class to train a simple GAN.
         Generator and discriminator are torch model objects
         Latent_space_function(n) is a function which returns an array of n points from the latent space
         Random_from_dataset is a function which returns an array of n points from the real dataset"""
-        if sw is None:
-            self.switch = Switches.TwoFiveSwitch()
+        if tt is None:
+            self.totrain = ToTrain.TwoFiveRule()
         else:
-            self.switch = sw
+            self.totrain = tt
         self.dataset = random_from_dataset
         self.latent_space = latent_space_function
         SuperTrainer.SuperTrainer.__init__(self, sw, models={"G": generator, "D": discriminator},
@@ -25,7 +25,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
 
     def train(self, n_epochs, n_batch):
         for epoch in range(n_epochs):
-            sw = self.switch.switch()  # Determine which model to train - sw will either be "D" or "G"
+            tt = self.totrain.next(self)  # Determine which model to train - sw will either be "D" or "G"
 
             # Both input functions return the tuple (dis_in, labels)
             # generator_in returns (gen_out, labels) - this data is passed through D and used to train G
@@ -33,19 +33,19 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
             # For other GAN types: input functions can return whatever makes the most sense for your specific type of GAN
             # (so controllable GAN, for instance, might want to return a classification vector as well)
             dis_in, y = self.in_functions[sw](n_batch)
-            if sw == "G":  # If we're training the generator, we should temporarily put the discriminator in eval mode
+            if tt == "G":  # If we're training the generator, we should temporarily put the discriminator in eval mode
                 self.models["D"].eval()
             mod_pred = self.models["D"](dis_in)
             self.models["D"].train()
-            mod_loss = self.loss_functions[sw](mod_pred, y)
+            mod_loss = self.loss_functions[tt](mod_pred, y)
 
             # Logging for visualizers (currently only loss_by_epoch)
-            self.losses[sw].append(mod_loss.item())
+            self.losses[tt].append(mod_loss.item())
 
             # Pytorch training steps
-            self.optimizers[sw].zero_grad()
+            self.optimizers[tt].zero_grad()
             mod_loss.backward()
-            self.optimizers[sw].step()
+            self.optimizers[tt].step()
 
     def eval_generator(self, in_dat):
         return self.eval("G", in_dat)

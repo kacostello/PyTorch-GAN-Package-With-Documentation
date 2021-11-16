@@ -7,7 +7,7 @@ Created on Sun Nov 14 10:53:16 2021
 
 import SuperTrainer
 import WassersteinGANTrainer
-import Switches
+import ToTrain
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

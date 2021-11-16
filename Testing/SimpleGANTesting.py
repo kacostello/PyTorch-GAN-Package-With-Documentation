@@ -1,5 +1,5 @@
 from SimpleGANTrainer import SimpleGANTrainer
-from Switches import TwoFiveSwitch
+from ToTrain import TwoFiveSwitch
 import torch
 import torch.nn as nn
 import math

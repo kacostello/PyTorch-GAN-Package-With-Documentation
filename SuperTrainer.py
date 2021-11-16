@@ -5,13 +5,13 @@ import matplotlib.pyplot as plt
 
 
 class SuperTrainer:
-    def __init__(self, switch, models={}, in_functions={}, loss_functions={}, opts={}):
+    def __init__(self, totrain, models={}, in_functions={}, loss_functions={}, opts={}):
         """SuperTrainer object, the base class for all GAN trainer objects.
         switch is a subclass of the Switch object, and returns the designation for which model to train - implementation depends on the specific subclass
         Models is a dictionary containing the pytorch model objects, and is of the format {designation: model}
         In_functions is a dictionary containing the functions which create input data for the models, and is of the format {model designation: function}
         Loss functions is formatted the same as in_functions"""
-        self.switch = switch
+        self.totrain = totrain
         self.models = models
         self.in_functions = in_functions
         self.loss_functions = loss_functions
