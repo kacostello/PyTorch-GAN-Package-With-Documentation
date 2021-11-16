@@ -22,7 +22,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
                                                          "D": self.discriminator_input},
                                            loss_functions={"G": g_loss, "D": d_loss},
                                            opts={"G": g_opt, "D": d_opt})
-        self.losses = {"G": [], "D": []}
+        self.stats["losses"] = {"G": [], "D": []}
 
     def train(self, n_epochs, n_batch):
         for epoch in range(n_epochs):
