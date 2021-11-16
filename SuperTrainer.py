@@ -32,3 +32,15 @@ class SuperTrainer:
         model_loss = self.stats["losses"][model]
         plt.plot(model_loss)
         plt.show()
+
+    def epochs_trained(self, model):
+        return self.stats["epochs_trained"][model]
+
+    def total_epochs_trained(self):
+        total = 0
+        for model in self.list_models():
+            total += self.epochs_trained(model)
+        return total
+
+    def list_models(self):
+        return [n for n in self.models]  # Kinda scuffed code to get a list of a dict's keys. do not remember the actual way

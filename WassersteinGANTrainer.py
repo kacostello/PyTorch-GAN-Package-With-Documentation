@@ -26,6 +26,7 @@ class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
                                            loss_functions={"G": g_loss, "D": d_loss},
                                            opts={"G": g_opt, "D": d_opt})
         self.stats["losses"] = {"G": [], "D": []}
+        self.stats["epochs_trained"] = {"G": 0, "D": 0}
 
     def train(self, n_epochs, n_batch):
         for epoch in range(n_epochs):
@@ -43,8 +44,9 @@ class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
             self.models["D"].train()
             mod_loss = self.loss_functions[tt](mod_pred, y)
 
-            # Logging for visualizers (currently only loss_by_epoch)
+            # Logging for visualizers
             self.stats["losses"][tt].append(mod_loss.item())
+            self.stats["epochs_trained"][tt] += 1
 
             # Pytorch training steps
             self.optimizers[tt].zero_grad()
