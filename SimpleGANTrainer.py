@@ -16,7 +16,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
             self.totrain = tt
         self.dataset = random_from_dataset
         self.latent_space = latent_space_function
-        SuperTrainer.SuperTrainer.__init__(self, sw, models={"G": generator, "D": discriminator},
+        SuperTrainer.SuperTrainer.__init__(self, tt, models={"G": generator, "D": discriminator},
                                            in_functions={"G": self.generator_input,
                                                          "D": self.discriminator_input},
                                            loss_functions={"G": g_loss, "D": d_loss},
@@ -32,7 +32,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
             # discriminator_in returns (dis_in, labels) - this is used to train D directly
             # For other GAN types: input functions can return whatever makes the most sense for your specific type of GAN
             # (so controllable GAN, for instance, might want to return a classification vector as well)
-            dis_in, y = self.in_functions[sw](n_batch)
+            dis_in, y = self.in_functions[tt](n_batch)
             if tt == "G":  # If we're training the generator, we should temporarily put the discriminator in eval mode
                 self.models["D"].eval()
             mod_pred = self.models["D"](dis_in)
