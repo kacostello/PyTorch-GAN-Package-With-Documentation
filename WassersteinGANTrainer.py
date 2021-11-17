@@ -7,7 +7,7 @@ import torch.optim as optim
 
 class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
     def __init__(self, generator, discriminator, latent_space_function, random_from_dataset, g_loss, d_loss, g_lr, d_lr, tt=None):
-        """Class to train a simple GAN.
+        """Class to train a Wasserstein GAN.
         Generator and discriminator are torch model objects
         Latent_space_function(n) is a function which returns an array of n points from the latent space
         Random_from_dataset is a function which returns an array of n points from the real dataset"""
