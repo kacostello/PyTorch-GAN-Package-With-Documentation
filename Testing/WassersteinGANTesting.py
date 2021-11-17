@@ -48,7 +48,7 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.disc = nn.Sequential(
             nn.Linear(7, 4),
-            nn.Relu(inplace = True),
+            nn.ReLU(inplace = True),
             nn.Linear(4, 1))
 
     def forward(self, x):
