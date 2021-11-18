@@ -5,7 +5,7 @@ import torch.nn as nn
 import math
 import numpy as np
 
-num_classes =
+# num_classes =
 
 def lat_space(batch_size):
     return torch.randint(0, 2, size=(batch_size, 7)).float()
