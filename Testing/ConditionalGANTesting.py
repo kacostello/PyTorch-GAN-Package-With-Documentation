@@ -2,36 +2,20 @@ from SimpleGANTrainer import SimpleGANTrainer
 from ToTrain import TwoFiveRule
 import torch
 import torch.nn as nn
-import math
 import numpy as np
 import GetData
-
-# num_classes =
-data = GetData.wineData()
-print(data)
 
 def lat_space(batch_size):
     return torch.randint(0, 2, size=(batch_size, 7)).float()
 
-
-def list_from_num(num):
-    return [int(x) for x in list(bin(num))[2:]]
-
-
 def batch_from_data(batch_size=16):
-    max_int = 128
-    # Get the number of binary places needed to represent the maximum number
-    max_length = int(math.log(max_int, 2))
+    # Obtain some entries
+    num_rows = wine_data.shape[0]
+    rand_indices = np.random.choice(num_rows, size=batch_size, replace=False)
+    data = wine_data[rand_indices, :]
 
-    # Sample batch_size number of integers in range 0-max_int
-    sampled_integers = np.random.randint(0, int(max_int / 2), batch_size)
-
-    # create a list of labels all ones because all numbers are even
-    labels = [1] * batch_size
-
-    # Generate a list of binary numbers for training.
-    data = [list_from_num(int(x * 2)) for x in sampled_integers]
-    data = [([0] * (max_length - len(x))) + x for x in data]
+    # Get related labels
+    labels = wine_labels[rand_indices, :]
 
     return torch.tensor(data).float()
 
@@ -40,7 +24,7 @@ class Generator(nn.Module):
 
     def __init__(self):
         super(Generator, self).__init__()
-        self.dense_layer = nn.Linear(7, 7)
+        self.dense_layer = nn.Linear(num_inputs, num_inputs)
         self.activation = nn.Sigmoid()
 
     def forward(self, x):
@@ -50,12 +34,17 @@ class Generator(nn.Module):
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
-        self.dense = nn.Linear(7, 1)
+        self.dense = nn.Linear(num_inputs, 1)
         self.activation = nn.Sigmoid()
 
     def forward(self, x):
         return self.activation(self.dense(x))
 
+# Data imports
+wine_data, wine_labels = GetData.wineData()
+num_inputs = np.shape(wine_data)[1]
+num_classes = 11
+print(num_classes)
 
 gen = Generator()
 dis = Discriminator()
