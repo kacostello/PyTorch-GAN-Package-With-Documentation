@@ -4,8 +4,11 @@ import torch
 import torch.nn as nn
 import math
 import numpy as np
+import GetData
 
 # num_classes =
+data = GetData.wineData()
+print(data)
 
 def lat_space(batch_size):
     return torch.randint(0, 2, size=(batch_size, 7)).float()

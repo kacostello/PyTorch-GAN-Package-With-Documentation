@@ -3,9 +3,12 @@ import SimpleGANTrainer
 import pandas as pd
 import numpy as np
 
+def wineData():
+    wine_file = 'winequality-white.csv'
+    wine_data = pd.read_csv(wine_file, sep=";")
+    return wine_data
 
-def runGan():
-    data = pd.read_csv('.\\pytorch_GAN_Package\\winequality-white.csv', sep=";")
+def testWineData(data):
     print(np.shape(data))
     print(data)
     data = data.to_numpy()
@@ -13,7 +16,3 @@ def runGan():
     print(data[0])
     # gan = SimpleGANTrainer.SimpleGANTrainer()
     # gan.train()
-
-
-if __name__ == "__main__":
-    runGan()
