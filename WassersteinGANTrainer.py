@@ -3,6 +3,7 @@ import ToTrain
 import torch
 import math
 import torch.optim as optim
+import matplotlib.pyplot as plt
 
 
 class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
@@ -29,6 +30,7 @@ class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
         self.stats["epochs_trained"] = {"G": 0, "D": 0}
 
     def train(self, n_epochs, n_batch):
+        all_dists = []
         for epoch in range(n_epochs):
             tt = self.totrain.next(self)  # Determine which model to train - sw will either be "D" or "G"
 
@@ -57,8 +59,16 @@ class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
                 for p in self.models["D"].parameters():
                     p.data.clamp_(-0.01, 0.01)
 
-
-
+            w_dists = self.all_Wasserstein_dists(self.eval_generator(self.latent_space(256)), self.dataset(256))
+            w_dist_mean = torch.mean(w_dists)
+            all_dists.append(w_dist_mean)
+            #print(w_dist_mean)
+        print(len(all_dists))
+        plt.title('Wasserstein GAN Training Over Time')
+        plt.xlabel('Batches')
+        plt.ylabel('Wasserstein Distance Mean')
+        plt.plot(all_dists)
+        plt.show()
 
     def eval_generator(self, in_dat):
         return self.eval("G", in_dat)
