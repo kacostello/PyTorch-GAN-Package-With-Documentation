@@ -5,10 +5,11 @@ import numpy as np
 
 def wineData():
     wine_file = 'winequality-white.csv'
-    wine_data = pd.read_csv(wine_file, sep=";")
-    wine_data = wine_data.to_numpy()
-    data = wine_data[:, 0:11]
-    labels = wine_data[:, 11]
+    file_data = pd.read_csv(wine_file, sep=";")
+    file_data = (file_data - file_data.mean()) / file_data.std()
+    file_data = file_data.to_numpy()
+    data = file_data[:, [1, 2, 3, 4, 7, 9, 10]]
+    labels = file_data[:, 11]
 
     return data, labels
 
@@ -26,4 +27,4 @@ number_of_rows = wine_data.shape[0]
 random_indices = np.random.choice(number_of_rows, size=16, replace=False)
 random_rows = wine_data[random_indices, :]
 
-print(random_rows)
+# print(random_rows)
