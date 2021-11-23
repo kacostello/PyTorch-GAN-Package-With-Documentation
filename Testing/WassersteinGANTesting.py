@@ -72,6 +72,5 @@ dis_loss = disLoss
 sw = TwoFiveRule()
 
 gan = WassersteinGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, 0.0001, 0.0002, sw)
-gan.train(7000, 16)
+gan.train(20, 2000)
 print(gan.eval_generator(lat_space(16)))
-gan.loss_by_epoch_d()
