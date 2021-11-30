@@ -31,34 +31,36 @@ def batch_from_data(batch_size=16):
 def to_one_hot(labels):
     oneHot = np.zeros((labels.shape[0], num_classes)).astype(int)
     oneHot[np.arange(labels.size), labels.astype(int)] = 1
-    return oneHot.T
+    return oneHot
 
 class Generator(nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
-        self.embedding_label = nn.Embedding(1, num_classes)
+        self.embedding_label = nn.Embedding(num_classes, 1)
         self.dense_layer = nn.Linear(num_inputs + num_classes, num_inputs)
         self.activation = nn.Sigmoid()
 
     def forward(self, x):
         data = x[:, 0:num_inputs]
         labels = x[:, num_inputs:].int()
-        gen_input = torch.cat((data, self.embedding_label(labels)), 1)
+        gan_batch_size = labels.size(dim=0)
+        gen_input = torch.cat((data, self.embedding_label(labels).reshape(gan_batch_size, num_classes)), 1)
         new_data = self.activation(self.dense_layer(gen_input))
         return torch.cat((new_data, labels), 1)
 
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
-        self.embedding_label = nn.Embedding(1, num_classes)
+        self.embedding_label = nn.Embedding(num_classes, 1)
         self.dense = nn.Linear(num_inputs + num_classes, 1)
         self.activation = nn.Sigmoid()
 
     def forward(self, x):
         data = x[:, 0:num_inputs]
-        labels = x[:, num_inputs:]
-        dis_input = torch.cat((data, self.embedding_label(labels)), 1)
-        return self.activation(self.dense(dis_input))
+        labels = x[:, num_inputs:].int()
+        gan_batch_size = labels.size(dim=0)
+        dis_input = torch.cat((data, self.embedding_label(labels).reshape(gan_batch_size, num_classes)), 1)
+        return self.activation(self.dense(dis_input.float()))
 
 # Data imports
 wine_data, wine_labels = GetData.wineData()
@@ -78,6 +80,11 @@ sw = TwoFiveRule()
 
 gan = SimpleGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, gen_opt, dis_opt, sw)
 gan.train(7000, 16)
-print(gan.eval_generator(lat_space(16)))
+output = gan.eval_generator(lat_space(16))
+data = output[:, 0:num_inputs]
+labels = output[:, num_inputs:].int()
+labels = torch.argmax(labels, dim=1)
+print(data)
+print(labels)
 gan.loss_by_epoch_d()
 
