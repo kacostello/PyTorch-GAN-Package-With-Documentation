@@ -2,11 +2,16 @@ from SimpleGANTrainer import SimpleGANTrainer
 from ToTrain import TwoFiveRule
 import torch
 import torch.nn as nn
+import torch.nn.functional as func
 import numpy as np
 import GetData
 
 def lat_space(batch_size):
-    return torch.randint(0, 2, size=(batch_size, 7)).float()
+    data = torch.rand(batch_size, num_inputs)
+    labels = torch.randint(0, num_classes, size=(batch_size, 1))
+    labels = func.one_hot(labels, num_classes=num_classes)
+    labels = labels.reshape(batch_size, num_classes)
+    return torch.cat((data, labels), 1)
 
 def batch_from_data(batch_size=16):
     # Obtain some entries
@@ -15,36 +20,52 @@ def batch_from_data(batch_size=16):
     data = wine_data[rand_indices, :]
 
     # Get related labels
-    labels = wine_labels[rand_indices, :]
+    labels = wine_labels[rand_indices]
+    labels = to_one_hot(labels)
 
-    return torch.tensor(data).float()
+    # Combine data and labels
+    data_labels = np.concatenate((data, labels), axis=1)
 
+    return torch.tensor(data_labels)
+
+def to_one_hot(labels):
+    oneHot = np.zeros((labels.shape[0], num_classes)).astype(int)
+    oneHot[np.arange(labels.size), labels.astype(int)] = 1
+    return oneHot
 
 class Generator(nn.Module):
-
     def __init__(self):
         super(Generator, self).__init__()
-        self.dense_layer = nn.Linear(num_inputs, num_inputs)
+        self.embedding_label = nn.Embedding(num_classes, 1)
+        self.dense_layer = nn.Linear(num_inputs + num_classes, num_inputs)
         self.activation = nn.Sigmoid()
 
     def forward(self, x):
-        return self.activation(self.dense_layer(x))
-
+        data = x[:, 0:num_inputs]
+        labels = x[:, num_inputs:].int()
+        gan_batch_size = labels.size(dim=0)
+        gen_input = torch.cat((data, self.embedding_label(labels).reshape(gan_batch_size, num_classes)), 1)
+        new_data = self.activation(self.dense_layer(gen_input))
+        return torch.cat((new_data, labels), 1)
 
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
-        self.dense = nn.Linear(num_inputs, 1)
+        self.embedding_label = nn.Embedding(num_classes, 1)
+        self.dense = nn.Linear(num_inputs + num_classes, 1)
         self.activation = nn.Sigmoid()
 
     def forward(self, x):
-        return self.activation(self.dense(x))
+        data = x[:, 0:num_inputs]
+        labels = x[:, num_inputs:].int()
+        gan_batch_size = labels.size(dim=0)
+        dis_input = torch.cat((data, self.embedding_label(labels).reshape(gan_batch_size, num_classes)), 1)
+        return self.activation(self.dense(dis_input.float()))
 
 # Data imports
 wine_data, wine_labels = GetData.wineData()
 num_inputs = np.shape(wine_data)[1]
 num_classes = 11
-print(num_classes)
 
 gen = Generator()
 dis = Discriminator()
@@ -59,6 +80,11 @@ sw = TwoFiveRule()
 
 gan = SimpleGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, gen_opt, dis_opt, sw)
 gan.train(7000, 16)
-print(gan.eval_generator(lat_space(16)))
+output = gan.eval_generator(lat_space(16))
+data = output[:, 0:num_inputs]
+labels = output[:, num_inputs:].int()
+labels = torch.argmax(labels, dim=1)
+print(data)
+print(labels)
 gan.loss_by_epoch_d()
 
