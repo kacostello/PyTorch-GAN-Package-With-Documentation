@@ -6,11 +6,13 @@ import math
 
 class SimpleGANTrainer(SuperTrainer.SuperTrainer):
     def __init__(self, generator, discriminator, latent_space_function, random_from_dataset, g_loss, d_loss, g_opt,
-                 d_opt, tt=None):
+                 d_opt, tt=None, d_thresh=0.5):
         """Class to train a simple GAN.
         Generator and discriminator are torch model objects
         Latent_space_function(n) is a function which returns an array of n points from the latent space
-        Random_from_dataset is a function which returns an array of n points from the real dataset"""
+        Random_from_dataset is a function which returns an array of n points from the real dataset
+        d_thresh is an optional parameter used to determine the threshold for a positive result from the discriminator.
+        Used for visualizations."""
         if tt is None:
             self.totrain = ToTrain.TwoFiveRule()
         else:
@@ -24,6 +26,11 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
                                            opts={"G": g_opt, "D": d_opt})
         self.stats["losses"] = {"G": [], "D": []}
         self.stats["epochs_trained"] = {"G": 0, "D": 0}
+        self.stats["d_fpr"] = []
+        self.stats["d_recall"] = []
+        self.stats["d_precision"] = []
+
+        self.d_thresh = d_thresh
 
     def train(self, n_epochs, n_batch):
         for epoch in range(n_epochs):
@@ -44,6 +51,31 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
             # Logging for visualizers
             self.stats["losses"][tt].append(mod_loss.item())
             self.stats["epochs_trained"][tt] += 1
+
+            y_flat = y.numpy().flatten()  # Calculate fPr, recall, precision
+            mod_pred_flat = mod_pred.numpy().flatten()
+            fP = 0
+            fN = 0
+            tP = 0
+            tN = 0
+            for i in range(len(y_flat)):
+                if y_flat[i] == 0:
+                    if mod_pred_flat[i] > self.d_thresh:
+                        fP += 1
+                    else:
+                        tN += 1
+                else:
+                    if mod_pred_flat[i] > self.d_thresh:
+                        tP += 1
+                    else:
+                        fN += 1
+
+            if fP + tN > 0:
+                self.stats["d_fpr"].append(fP / (fP + tN))
+            if tP + fP > 0:
+                self.stats["d_precision"].append(tP / (tP + fP))
+            if tP + fN > 0:
+                self.stats["d_recall"].append(tP / (tP + fN))
 
             # Pytorch training steps
             self.optimizers[tt].zero_grad()
