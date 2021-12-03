@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as func
 import numpy as np
-import GetData
+import GetSpotifyData
 
 def lat_space(batch_size):
     data = torch.rand(batch_size, num_inputs)
@@ -15,12 +15,12 @@ def lat_space(batch_size):
 
 def batch_from_data(batch_size=16):
     # Obtain some entries
-    num_rows = wine_data.shape[0]
+    num_rows = example_data.shape[0]
     rand_indices = np.random.choice(num_rows, size=batch_size, replace=False)
-    data = wine_data[rand_indices, :]
+    data = example_data[rand_indices, :]
 
     # Get related labels
-    labels = wine_labels[rand_indices]
+    labels = example_labels[rand_indices]
     labels = to_one_hot(labels)
 
     # Combine data and labels
@@ -63,9 +63,9 @@ class Discriminator(nn.Module):
         return self.activation(self.dense(dis_input.float()))
 
 # Data imports
-wine_data, wine_labels = GetData.wineData()
-num_inputs = np.shape(wine_data)[1]
-num_classes = 11
+example_data, example_labels = GetSpotifyData.spotifyData()
+num_inputs = np.shape(example_data)[1]
+num_classes = len(np.unique(example_labels))
 
 gen = Generator()
 dis = Discriminator()
