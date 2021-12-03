@@ -53,7 +53,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
             self.stats["epochs_trained"][tt] += 1
 
             y_flat = y.numpy().flatten()  # Calculate fPr, recall, precision
-            mod_pred_flat = mod_pred.numpy().flatten()
+            mod_pred_flat = mod_pred.detach().numpy().flatten()
             fP = 0
             fN = 0
             tP = 0

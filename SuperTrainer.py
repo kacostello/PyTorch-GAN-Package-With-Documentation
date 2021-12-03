@@ -20,9 +20,8 @@ class SuperTrainer:
         self.stats["losses"] = {}  # Dictionary to keep track of the model losses over time Of the format {model designation: [loss0, loss1, ..., lossn]}
 
     def __eq__(self, other):
+        # TODO: This doesn't actually guarantee that each model is strictly *equal*, but it's good enough for checking if save/load works
         try:
-            # Check if all models have equal state dicts
-            # TODO: This doesn't actually guarantee that each model is strictly *equal*, but it's good enough for checking if save/load works
             for model_name in self.list_models():
                 assert self.models[model_name].state_dict() == other.models[model_name].state_dict()
             assert self.stats == other.stats
@@ -280,3 +279,6 @@ class SuperTrainer:
         self.load_loss_functions(path)
         self.load_opt_state_dicts(path)
         self.load_to_train(path)
+
+
+

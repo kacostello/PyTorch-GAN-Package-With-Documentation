@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
-    def __init__(self, generator, discriminator, latent_space_function, random_from_dataset, g_loss, d_loss, g_lr, d_lr, tt=None):
+    def __init__(self, generator, discriminator, latent_space_function, random_from_dataset, g_loss, d_loss, g_lr, d_lr, tt=None, d_thresh=0.5):
         """Class to train a Wasserstein GAN.
         Generator and discriminator are torch model objects
         Latent_space_function(n) is a function which returns an array of n points from the latent space
@@ -29,6 +29,12 @@ class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
         self.stats["losses"] = {"G": [], "D": []}
         self.stats["epochs_trained"] = {"G": 0, "D": 0}
 
+        self.stats["d_fpr"] = []
+        self.stats["d_recall"] = []
+        self.stats["d_precision"] = []
+
+        self.d_thresh = d_thresh
+
     def train(self, n_epochs, n_batch):
         all_dists = []
         for epoch in range(n_epochs):
@@ -49,6 +55,31 @@ class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
             # Logging for visualizers
             self.stats["losses"][tt].append(mod_loss.item())
             self.stats["epochs_trained"][tt] += 1
+
+            y_flat = y.numpy().flatten()  # Calculate fPr, recall, precision
+            mod_pred_flat = mod_pred.detach().numpy().flatten()
+            fP = 0
+            fN = 0
+            tP = 0
+            tN = 0
+            for i in range(len(y_flat)):
+                if y_flat[i] == 0:
+                    if mod_pred_flat[i] > self.d_thresh:
+                        fP += 1
+                    else:
+                        tN += 1
+                else:
+                    if mod_pred_flat[i] > self.d_thresh:
+                        tP += 1
+                    else:
+                        fN += 1
+
+            if fP + tN > 0:
+                self.stats["d_fpr"].append(fP / (fP + tN))
+            if tP + fP > 0:
+                self.stats["d_precision"].append(tP / (tP + fP))
+            if tP + fN > 0:
+                self.stats["d_recall"].append(tP / (tP + fN))
 
             # Pytorch training steps
             self.optimizers[tt].zero_grad()
