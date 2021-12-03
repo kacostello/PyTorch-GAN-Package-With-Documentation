@@ -81,10 +81,10 @@ sw = TwoFiveRule()
 gan = SimpleGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, gen_opt, dis_opt, sw)
 gan.train(7000, 16)
 output = gan.eval_generator(lat_space(16))
-data = output[:, 0:num_inputs]
-labels = output[:, num_inputs:].int()
-labels = torch.argmax(labels, dim=1)
-print(data)
-print(labels)
+out_data = output[:, 0:num_inputs]
+out_labels = output[:, num_inputs:].int()
+out_labels = torch.argmax(out_labels, dim=1)
+print(out_data)
+print(out_labels)
 gan.loss_by_epoch_d()
 

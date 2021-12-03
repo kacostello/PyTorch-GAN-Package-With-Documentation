@@ -49,6 +49,9 @@ class SuperTrainer:
     def loss_by_epoch(self, model):  # TODO: format the graph nicely
         model_loss = self.stats["losses"][model]
         plt.plot(model_loss)
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.title("Loss by Epochs")
         plt.show()
 
     def epochs_trained(self, model):
