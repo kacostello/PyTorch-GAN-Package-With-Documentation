@@ -31,9 +31,9 @@ class SuperTrainer:
                 assert self.optimizers[opt_name].state_dict() == other.optimizers[opt_name].state_dict()
             assert self.list_opts() == other.list_opts()
             assert self.list_models() == other.list_models()
-        except:
+        except AssertionError:
             return False
-        finally:
+        else:
             return True
 
     def train(self, n_epochs, n_batch):
