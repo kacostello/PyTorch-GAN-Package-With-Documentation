@@ -280,5 +280,10 @@ class SuperTrainer:
         self.load_opt_state_dicts(path)
         self.load_to_train(path)
 
+    def models_to(self, newdevice):
+        self.device = newdevice
+        for model in self.list_models():
+            self.models[model].to(self.device)
+
 
 

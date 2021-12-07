@@ -6,11 +6,12 @@ import math
 
 class SimpleGANTrainer(SuperTrainer.SuperTrainer):
     def __init__(self, generator, discriminator, latent_space_function, random_from_dataset, g_loss, d_loss, g_opt,
-                 d_opt, tt=None, d_thresh=0.5):
+                 d_opt, device, tt=None, d_thresh=0.5):
         """Class to train a simple GAN.
         Generator and discriminator are torch model objects
         Latent_space_function(n) is a function which returns an array of n points from the latent space
         Random_from_dataset is a function which returns an array of n points from the real dataset
+        device is the pytorch device which models should be on.
         d_thresh is an optional parameter used to determine the threshold for a positive result from the discriminator.
         Used for visualizations."""
         if tt is None:
@@ -19,7 +20,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
             self.totrain = tt
         self.dataset = random_from_dataset
         self.latent_space = latent_space_function
-        SuperTrainer.SuperTrainer.__init__(self, tt, models={"G": generator, "D": discriminator},
+        SuperTrainer.SuperTrainer.__init__(self, tt, models={"G": generator.to(device), "D": discriminator.to(device)},
                                            in_functions={"G": self.generator_input,
                                                          "D": self.discriminator_input},
                                            loss_functions={"G": g_loss, "D": d_loss},
@@ -31,6 +32,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
         self.stats["d_precision"] = []
 
         self.d_thresh = d_thresh
+        self.device = device
 
     def train(self, n_epochs, n_batch):
         for epoch in range(n_epochs):
@@ -52,8 +54,8 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
             self.stats["losses"][tt].append(mod_loss.item())
             self.stats["epochs_trained"][tt] += 1
 
-            y_flat = y.numpy().flatten()  # Calculate fPr, recall, precision
-            mod_pred_flat = mod_pred.detach().numpy().flatten()
+            y_flat = y.cpu().numpy().flatten()  # Calculate fPr, recall, precision
+            mod_pred_flat = mod_pred.cpu().detach().numpy().flatten()
             fP = 0
             fN = 0
             tP = 0
@@ -107,16 +109,17 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
         self.loss_by_epoch("D")
 
     def discriminator_input(self, n_batch):
-        gen_in = self.latent_space(math.ceil(n_batch / 2))
+        gen_in = self.latent_space(math.ceil(n_batch / 2), self.device)
         self.models["G"].eval()
         gen_out = self.models["G"](gen_in)
         self.models["G"].train()
-        dis_in = torch.cat((gen_out, self.dataset(int(n_batch / 2))))
-        y = torch.tensor([[0] for n in range(math.ceil(n_batch / 2))] + [[1] for n in range(int(n_batch / 2))]).float()  # TODO: used .float() here because the model I'm using to test uses floats. Find a way to automatically find the correct data type
+        dis_in = torch.cat((gen_out, self.dataset(int(n_batch / 2), self.device)))
+        y = torch.tensor([[0] for n in range(math.ceil(n_batch / 2))] + [[1] for n in range(int(n_batch / 2))],
+                         device=self.device).float()  # TODO: used .float() here because the model I'm using to test uses floats. Find a way to automatically find the correct data type
         return dis_in, y
 
     def generator_input(self, n_batch):
-        gen_in = self.latent_space(n_batch)
+        gen_in = self.latent_space(n_batch, self.device)
         gen_out = self.models["G"](gen_in)
-        y = torch.tensor([[1] for n in range(n_batch)]).float()
+        y = torch.tensor([[1] for n in range(n_batch)], device=self.device).float()
         return gen_out, y

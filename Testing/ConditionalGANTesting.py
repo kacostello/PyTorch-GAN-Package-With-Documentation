@@ -6,14 +6,14 @@ import torch.nn.functional as func
 import numpy as np
 import GetSpotifyData
 
-def lat_space(batch_size):
-    data = torch.rand(batch_size, num_inputs)
-    labels = torch.randint(0, num_classes, size=(batch_size, 1))
+def lat_space(batch_size, device="cpu"):
+    data = torch.rand(batch_size, num_inputs, device=device)
+    labels = torch.randint(0, num_classes, size=(batch_size, 1), device=device)
     labels = func.one_hot(labels, num_classes=num_classes)
     labels = labels.reshape(batch_size, num_classes)
     return torch.cat((data, labels), 1)
 
-def batch_from_data(batch_size=16):
+def batch_from_data(batch_size=16, device="cpu"):
     # Obtain some entries
     num_rows = example_data.shape[0]
     rand_indices = np.random.choice(num_rows, size=batch_size, replace=False)
@@ -26,7 +26,7 @@ def batch_from_data(batch_size=16):
     # Combine data and labels
     data_labels = np.concatenate((data, labels), axis=1)
 
-    return torch.tensor(data_labels)
+    return torch.tensor(data_labels, device=device)
 
 def to_one_hot(labels):
     oneHot = np.zeros((labels.shape[0], num_classes)).astype(int)
@@ -78,9 +78,9 @@ dis_loss = nn.BCELoss()
 
 sw = TwoFiveRule()
 
-gan = SimpleGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, gen_opt, dis_opt, sw)
+gan = SimpleGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, gen_opt, dis_opt, "cuda", sw)
 gan.train(7000, 16)
-output = gan.eval_generator(lat_space(16))
+output = gan.eval_generator(lat_space(16, "cuda"))
 out_data = output[:, 0:num_inputs]
 out_labels = output[:, num_inputs:].int()
 out_labels = torch.argmax(out_labels, dim=1)

@@ -6,15 +6,15 @@ import math
 import numpy as np
 
 
-def lat_space(batch_size):
-    return torch.randint(0, 2, size=(batch_size, 7)).float()
+def lat_space(batch_size, device="cpu"):
+    return torch.randint(0, 2, size=(batch_size, 7), device=device).float()
 
 
 def list_from_num(num):
     return [int(x) for x in list(bin(num))[2:]]
 
 
-def batch_from_data(batch_size=16):
+def batch_from_data(batch_size=16, device="cpu"):
     max_int = 128
     # Get the number of binary places needed to represent the maximum number
     max_length = int(math.log(max_int, 2))
@@ -29,7 +29,7 @@ def batch_from_data(batch_size=16):
     data = [list_from_num(int(x * 2)) for x in sampled_integers]
     data = [([0] * (max_length - len(x))) + x for x in data]
 
-    return torch.tensor(data).float()
+    return torch.tensor(data, device=device).float()
 
 
 class Generator(nn.Module):
@@ -71,6 +71,8 @@ dis_loss = disLoss
 
 sw = TwoFiveRule()
 
-gan = WassersteinGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, 0.0001, 0.0002, sw)
-gan.train(1000000, 2000)
-print(gan.eval_generator(lat_space(16)))
+device = "cuda"
+
+gan = WassersteinGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, 0.0001, 0.0002, device, sw)
+gan.train(1000, 2000)
+print(gan.eval_generator(lat_space(16, device)))
