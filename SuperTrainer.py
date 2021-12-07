@@ -41,7 +41,7 @@ class SuperTrainer:
 
     def eval(self, model, in_dat):
         self.models[model].eval()
-        out = self.models[model](in_dat)
+        out = self.models[model](in_dat.to(device=self.device))
         self.models[model].train()
         return out
 
