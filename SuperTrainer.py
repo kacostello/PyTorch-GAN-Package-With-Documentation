@@ -3,6 +3,8 @@ import os
 import torch
 import pickle
 
+from scipy.stats import wasserstein_distance
+
 
 class SuperTrainer:
     def __init__(self, totrain, models={}, in_functions={}, loss_functions={}, opts={}):
@@ -284,6 +286,12 @@ class SuperTrainer:
         self.device = newdevice
         for model in self.list_models():
             self.models[model].to(self.device)
+            
+    def all_Wasserstein_dists(self, fake, real):
+        feature_dim = len(real[0])
+        real = real.cpu().detach().numpy()
+        fake = fake.cpu().detach().numpy()
+        return torch.tensor([wasserstein_distance(fake[:, k], real[:, k]) for k in range(feature_dim)])
 
 
 
