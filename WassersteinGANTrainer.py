@@ -92,7 +92,6 @@ class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
                     p.data.clamp_(-0.01, 0.01)
 
 
-            # TODO: ???
             w_dists = self.all_Wasserstein_dists(self.eval_generator(self.latent_space(256)), self.dataset(256))
             w_dist_mean = torch.mean(w_dists)
             all_dists.append(w_dist_mean)
