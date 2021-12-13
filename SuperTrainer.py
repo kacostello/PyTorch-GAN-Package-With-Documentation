@@ -7,7 +7,7 @@ from scipy.stats import wasserstein_distance
 
 
 class SuperTrainer:
-    def __init__(self, totrain, models={}, in_functions={}, loss_functions={}, opts={}):
+    def __init__(self, totrain, models={}, in_functions={}, loss_functions={}, opts={}, classes=1):
         """SuperTrainer object, the base class for all GAN trainer objects.
         switch is a subclass of the Switch object, and returns the designation for which model to train - implementation depends on the specific subclass
         Models is a dictionary containing the pytorch model objects, and is of the format {designation: model}
@@ -20,6 +20,7 @@ class SuperTrainer:
         self.optimizers = opts
         self.stats = {}  # Dictionary to keep track of the stats we want to save. Of the format {stat_name:stat_dict}
         self.stats["losses"] = {}  # Dictionary to keep track of the model losses over time Of the format {model designation: [loss0, loss1, ..., lossn]}
+        self.classes = classes
 
     def __eq__(self, other):
         # TODO: This doesn't actually guarantee that each model is strictly *equal*, but it's good enough for checking if save/load works
@@ -53,6 +54,19 @@ class SuperTrainer:
         plt.xlabel("Epochs")
         plt.ylabel("Loss")
         plt.title("Loss by Epochs")
+        plt.show()
+
+    def divergence_by_epoch(self):
+        ax = plt.subplot(111)
+        for the_class in range(self.classes):
+            plt.plot(list(range(1, len(self.stats["W_Dist"][the_class]) + 1)),
+                     self.stats["W_Dist"][the_class], label="Class: " + str(the_class))
+        plt.xlabel("Epochs")
+        plt.ylabel("Wasserstein Distance")
+        plt.title("Wasserstein Distance by Epochs")
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         plt.show()
 
     def epochs_trained(self, model):
