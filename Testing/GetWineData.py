@@ -1,6 +1,6 @@
 import pandas as pd
 
-def wineData():
+def wine_data():
     wine_file = 'winequality-white.csv'
     file_data = pd.read_csv(wine_file, sep=";")
     file_data = file_data.to_numpy()
