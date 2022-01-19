@@ -5,7 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as func
 import numpy as np
 import GetSpotifyData
-import matplotlib.pyplot as plt
 
 def lat_space(batch_size, device="cpu"):
     data = torch.rand(batch_size, num_inputs, device=device)
@@ -13,7 +12,6 @@ def lat_space(batch_size, device="cpu"):
     labels = func.one_hot(labels, num_classes=num_classes)
     labels = labels.reshape(batch_size, num_classes)
     return torch.cat((data, labels), 1)
-
 
 def batch_from_data(batch_size=16, device="cpu", label=-1):
     # check for labels or not
