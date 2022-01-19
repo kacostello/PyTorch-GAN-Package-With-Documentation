@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 
 
 class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
-    def __init__(self, generator, discriminator, latent_space_function, random_from_dataset, g_loss, d_loss, g_lr, d_lr, device, tt=None, d_thresh=0.5):
+    def __init__(self, generator, discriminator, latent_space_function, random_from_dataset, g_loss, d_loss, g_lr, d_lr,
+                 device, tt=None, d_thresh=0.5):
         """Class to train a Wasserstein GAN.
         Generator and discriminator are torch model objects
         Latent_space_function(n) is a function which returns an array of n points from the latent space
@@ -44,7 +45,7 @@ class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
             # Both input functions return the tuple (dis_in, labels)
             # generator_in returns (gen_out, labels) - this data is passed through D and used to train G
             # discriminator_in returns (dis_in, labels) - this is used to train D directly
-            # For other GAN types: input functions can return whatever makes the most sense for your specific type of GAN
+            # For other GAN types: input functions can return whatever makes the most sense for your specific GAN
             # (so controllable GAN, for instance, might want to return a classification vector as well)
             dis_in, y = self.in_functions[tt](n_batch)
             if tt == "G":  # If we're training the generator, we should temporarily put the discriminator in eval mode
@@ -91,11 +92,10 @@ class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
                 for p in self.models["D"].parameters():
                     p.data.clamp_(-0.01, 0.01)
 
-
             w_dists = self.all_Wasserstein_dists(self.eval_generator(self.latent_space(256)), self.dataset(256))
             w_dist_mean = torch.mean(w_dists)
             all_dists.append(w_dist_mean)
-            #print(w_dist_mean)
+            # print(w_dist_mean)
         print(len(all_dists))
         plt.title('Wasserstein GAN Training Over Time')
         plt.xlabel('Batches')
@@ -133,11 +133,13 @@ class WassersteinGANTrainer(SuperTrainer.SuperTrainer):
         gen_out = self.models["G"](gen_in)
         self.models["G"].train()
         dis_in = torch.cat((gen_out, self.dataset(int(n_batch / 2), self.device)))
-        y = torch.tensor([[0] for n in range(math.ceil(n_batch / 2))] + [[1] for n in range(int(n_batch / 2))], device=self.device).float()  # TODO: used .float() here because the model I'm using to test uses floats. Find a way to automatically find the correct data type
+        y = torch.tensor([[0] for _ in range(math.ceil(n_batch / 2))] + [[1] for _ in range(int(n_batch / 2))],
+                         device=self.device).float()  # TODO: used .float() here because the model I'm using to test
+        # uses floats. Find a way to automatically find the correct data type
         return dis_in, y
 
     def generator_input(self, n_batch):
         gen_in = self.latent_space(n_batch, self.device)
         gen_out = self.models["G"](gen_in)
-        y = torch.tensor([[1] for n in range(n_batch)], device=self.device).float()
+        y = torch.tensor([[1] for _ in range(n_batch)], device=self.device).float()
         return gen_out, y
