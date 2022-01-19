@@ -8,15 +8,15 @@ import math
 import numpy as np
 
 
-def lat_space(batch_size, device):
-    return torch.randint(0, 2, size=(batch_size, 7), device=device).float()
+def lat_space(batch_size, dev):
+    return torch.randint(0, 2, size=(batch_size, 7), device=dev).float()
 
 
 def list_from_num(num):
     return [int(x) for x in list(bin(num))[2:]]
 
 
-def batch_from_data(batch_size, device):
+def batch_from_data(batch_size, dev):
     max_int = 128
     # Get the number of binary places needed to represent the maximum number
     max_length = int(math.log(max_int, 2))
@@ -31,7 +31,7 @@ def batch_from_data(batch_size, device):
     data = [list_from_num(int(x * 2)) for x in sampled_integers]
     data = [([0] * (max_length - len(x))) + x for x in data]
 
-    return torch.tensor(data, device=device).float()
+    return torch.tensor(data, device=dev).float()
 
 
 class Generator(nn.Module):
@@ -73,7 +73,9 @@ gan.train(7000, 16)
 
 gan.soft_save(os.getcwd() + "/SAVETEST")
 
-gan2 = SimpleGANTrainer(Generator(), Discriminator(), None, None, None, None, torch.optim.Adam(gen.parameters(), lr=0.001), torch.optim.Adam(dis.parameters(), lr=0.001), device, None)
+gan2 = SimpleGANTrainer(Generator(), Discriminator(), None, None, None, None, torch.optim.Adam(gen.parameters(),
+                                                                                               lr=0.001),
+                        torch.optim.Adam(dis.parameters(), lr=0.001), device, None)
 gan2.soft_load(os.getcwd() + "/SAVETEST")
 
 assert gan == gan2

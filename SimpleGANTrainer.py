@@ -50,7 +50,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
             # Both input functions return the tuple (dis_in, labels)
             # generator_in returns (gen_out, labels) - this data is passed through D and used to train G
             # discriminator_in returns (dis_in, labels) - this is used to train D directly
-            # For other GAN types: input functions can return whatever makes the most sense for your specific type of GAN
+            # For other GAN types: input functions can return whatever makes the most sense for your specific GAN
             # (so controllable GAN, for instance, might want to return a classification vector as well)
             dis_in, y = self.in_functions[tt](n_batch)
             if tt == "G":  # If we're training the generator, we should temporarily put the discriminator in eval mode
@@ -66,7 +66,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
                 # Obtain batch of fake data
                 lat_space_data = self.generate_fake(class_num, self.num_input_variables, 500, self.device)
                 fake_batch = self.eval_generator(lat_space_data)
-                data_col = torch.arange(0, fake_batch.shape[1]-self.classes)
+                data_col = torch.arange(0, fake_batch.shape[1] - self.classes)
                 striped_fake_batch = torch.index_select(fake_batch, 1, data_col)
                 # Obtain batch of real data
                 real_batch = self.dataset(500, self.device, class_num)
@@ -135,19 +135,20 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
         gen_out = self.models["G"](gen_in)
         self.models["G"].train()
         dis_in = torch.cat((gen_out, self.dataset(int(n_batch / 2), self.device)))
-        y = torch.tensor([[0] for n in range(math.ceil(n_batch / 2))] + [[1] for n in range(int(n_batch / 2))],
-                         device=self.device).float()  # TODO: used .float() here because the model I'm using to test uses floats. Find a way to automatically find the correct data type
+        y = torch.tensor([[0] for _ in range(math.ceil(n_batch / 2))] + [[1] for _ in range(int(n_batch / 2))],
+                         device=self.device).float()  # TODO: used .float() here because the model I'm using to test
+        # uses floats. Find a way to automatically find the correct data type
         return dis_in, y
 
     def generator_input(self, n_batch):
         gen_in = self.latent_space(n_batch, self.device)
         gen_out = self.models["G"](gen_in)
-        y = torch.tensor([[1] for n in range(n_batch)], device=self.device).float()
+        y = torch.tensor([[1] for _ in range(n_batch)], device=self.device).float()
         return gen_out, y
 
-    def generate_fake(self, lableNum, num_input_variables, batch_size, device="cpu"):
+    def generate_fake(self, labelNum, num_input_variables, batch_size, device="cpu"):
         data = torch.rand(batch_size, num_input_variables, device=device)
-        labels = torch.from_numpy(np.ones(batch_size).astype(int) * lableNum)
+        labels = torch.from_numpy(np.ones(batch_size).astype(int) * labelNum)
         labels = func.one_hot(labels.to(torch.int64), num_classes=self.classes)
         labels = labels.reshape(batch_size, self.classes)
         return torch.cat((data, labels), 1)

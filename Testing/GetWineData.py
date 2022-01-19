@@ -1,6 +1,7 @@
 import pandas as pd
 
-#function to test wineequality-white data set
+
+# function to test winequality-white data set
 def wine_data():
     wine_file = 'winequality-white.csv'
     file_data = pd.read_csv(wine_file, sep=";")

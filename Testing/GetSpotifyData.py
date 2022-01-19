@@ -1,7 +1,8 @@
 import pandas as pd
 import os
 
-#function to test spotify data set
+
+# function to test spotify data set
 def spotify_data():
     cwd = os.getcwd()
     spotify_file = cwd + '\\pytorch_GAN_Package\\Testing\\spotify.csv'

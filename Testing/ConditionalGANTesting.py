@@ -6,14 +6,14 @@ import torch.nn.functional as func
 import numpy as np
 import GetSpotifyData
 
-def lat_space(batch_size, device="cpu"):
-    data = torch.rand(batch_size, num_inputs, device=device)
-    labels = torch.randint(0, num_classes, size=(batch_size, 1), device=device)
+def lat_space(batch_size, dev="cpu"):
+    data = torch.rand(batch_size, num_inputs, device=dev)
+    labels = torch.randint(0, num_classes, size=(batch_size, 1), device=dev)
     labels = func.one_hot(labels, num_classes=num_classes)
     labels = labels.reshape(batch_size, num_classes)
     return torch.cat((data, labels), 1)
 
-def batch_from_data(batch_size=16, device="cpu", label=-1):
+def batch_from_data(batch_size=16, dev="cpu", label=-1):
     # check for labels or not
     if label == -1:
         real_data = example_data
@@ -34,7 +34,7 @@ def batch_from_data(batch_size=16, device="cpu", label=-1):
     # Combine data and labels
     data_labels = np.concatenate((data, labels), axis=1).astype(float)
 
-    return torch.tensor(data_labels, device=device)
+    return torch.tensor(data_labels, device=dev)
 
 
 def to_one_hot(labels):
