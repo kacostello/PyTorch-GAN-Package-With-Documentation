@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-def spotifyData():
+def spotify_data():
     cwd = os.getcwd()
     spotify_file = cwd + '\\pytorch_GAN_Package\\Testing\\spotify.csv'
     file_data = pd.read_csv(spotify_file)
