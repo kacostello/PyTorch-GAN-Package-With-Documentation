@@ -90,7 +90,7 @@ def get_gen_input(lableNum, batch_size, device="cpu"):
     return torch.cat((data, labels), 1)
 
 # Data imports
-example_data, example_labels, maxDataValues = GetSpotifyData.spotifyData()
+example_data, example_labels, maxDataValues = GetSpotifyData.spotify_data()
 num_inputs = np.shape(example_data)[1]
 num_classes = len(np.unique(example_labels))
 
