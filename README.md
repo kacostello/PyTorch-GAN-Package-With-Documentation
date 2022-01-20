@@ -5,6 +5,17 @@
  - Pytorch
  - Matplotlib
 
+## PyTorch GAN Package General Information
+This PyTorch GAN Package includes different GANS using PyTorch and Python programming. The purpose of this package is to give the developer community a useful that will help make and test specific kinds of GANs. The GANs in the package include:
+
+ - Simple GAN
+ - Wasserstein GAN
+ - Conditional GAN
+ - Controllable GAN
+
+This package also includes a Super Trainer file, a ToTrain file, and visualizations. The package is designed so the user does not have to write a GAN entirely from scratch.
+
+If the user has no expreience with GANs, some experience with Python and opaque Machine Learning, or a GAN expert, this tool will be beneficial.
 
 ## Data Input
  - Accept numerical/tabular data: numpy matrix (2d) (rows = observations, columns = attributes)
