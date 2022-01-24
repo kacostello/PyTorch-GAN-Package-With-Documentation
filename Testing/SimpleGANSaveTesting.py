@@ -68,12 +68,12 @@ sw = TwoFiveRule()
 
 device = "cuda"
 
-gan = SimpleGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, gen_opt, dis_opt, sw)
-gan.train(7000, 16)
+gan = SimpleGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, gen_opt, dis_opt, device, sw)
+gan.train(700, 16)
 
 gan.soft_save(os.getcwd() + "/SAVETEST")
 
-gan2 = SimpleGANTrainer(Generator(), Discriminator(), None, None, None, None, torch.optim.Adam(gen.parameters(),
+gan2 = SimpleGANTrainer(Generator(), Discriminator(), lat_space, batch_from_data, None, None, torch.optim.Adam(gen.parameters(),
                                                                                                lr=0.001),
                         torch.optim.Adam(dis.parameters(), lr=0.001), device, None)
 gan2.soft_load(os.getcwd() + "/SAVETEST")
