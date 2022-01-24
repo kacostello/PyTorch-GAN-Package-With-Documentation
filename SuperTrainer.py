@@ -26,21 +26,20 @@ class SuperTrainer:
 
     def __eq__(self, other):
         # TODO: This doesn't actually guarantee that each model is strictly *equal*, but it's good enough for checking if save/load works
-        try:
 
-            for model_name in self.list_models():
-                assert self.models[model_name].state_dict() == other.models[model_name].state_dict()
-            assert self.stats == other.stats
-            assert self.in_functions == other.in_functions
-            assert self.loss_functions == other.loss_functions
-            for opt_name in self.list_opts():
-                assert self.optimizers[opt_name].state_dict() == other.optimizers[opt_name].state_dict()
-            assert self.list_opts() == other.list_opts()
-            assert self.list_models() == other.list_models()
-        except AssertionError:
+        if self.stats != other.stats:
             return False
-        finally:
-            return True
+        for i in self.in_functions:
+            if i not in other.in_functions or other.in_functions[i] is None:
+                return False
+        for i in self.loss_functions:
+            if i not in other.loss_functions or other.loss_functions[i] is None:
+                return False
+        if self.list_opts() != other.list_opts():
+            return False
+        if self.list_models() != other.list_models():
+            return False
+        return True
 
     def train(self, n_epochs, n_batch):
         raise NotImplementedError("Not implemented!")
