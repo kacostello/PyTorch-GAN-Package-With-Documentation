@@ -27,6 +27,7 @@ class SuperTrainer:
     def __eq__(self, other):
         # TODO: This doesn't actually guarantee that each model is strictly *equal*, but it's good enough for checking if save/load works
         try:
+
             for model_name in self.list_models():
                 assert self.models[model_name].state_dict() == other.models[model_name].state_dict()
             assert self.stats == other.stats
@@ -38,7 +39,7 @@ class SuperTrainer:
             assert self.list_models() == other.list_models()
         except AssertionError:
             return False
-        else:
+        finally:
             return True
 
     def train(self, n_epochs, n_batch):
