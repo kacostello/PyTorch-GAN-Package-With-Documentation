@@ -71,7 +71,7 @@ dis_loss = disLoss
 
 sw = TwoFiveRule()
 
-device = "cuda"
+device = input("Would you like to run this test on cpu or cuda? Type the one you wish to use: ")
 
 gan = WassersteinGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, 0.0001, 0.0002, device, sw)
 gan.train(1000, 2000)

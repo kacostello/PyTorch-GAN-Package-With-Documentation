@@ -66,7 +66,7 @@ dis_loss = nn.BCELoss()
 
 sw = TwoFiveRule()
 
-device = "cuda"
+device = input("Would you like to run this test on cpu or cuda? Type the one you wish to use: ")
 
 gan = SimpleGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, gen_opt, dis_opt, device, sw)
 gan.train(700, 16)

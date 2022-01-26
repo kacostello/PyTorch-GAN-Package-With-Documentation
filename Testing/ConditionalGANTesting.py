@@ -104,9 +104,10 @@ gen_loss = nn.BCELoss()
 dis_loss = nn.BCELoss()
 
 sw = TwoFiveRule()
+device = input("Would you like to run this test on cpu or cuda? Type the one you wish to use: ")
 
 gan = SimpleGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, gen_opt, dis_opt,
-                       "cpu", sw, num_input_variables=num_inputs, classes=num_classes)
+                       device, sw)
 epochs = 7000
 gan.train(epochs, 16)
 output = gan.eval_generator(lat_space(16, "cpu"))
