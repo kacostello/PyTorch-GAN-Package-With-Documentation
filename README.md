@@ -17,6 +17,8 @@ This package also includes a Super Trainer file, a ToTrain file, and visualizati
 
 If the user has no expreience with GANs, some experience with Python and opaque Machine Learning, or a GAN expert, this tool will be beneficial.
 
+The package design was built with three key features in mind: model building, model training, and model evaluation. For GAN structures that involve novel additions to previous designs, or require the manipulation of technical, subtle changes to the way training is conducted, the package can function as a tool kit for developers and researchers alike.
+
 ## Data Input
  - Accept numerical/tabular data: numpy matrix (2d) (rows = observations, columns = attributes)
  - If labeled with a class (0,n), another numpy array (1d) (integer index of the class, ie: 1, 2, 0, 3, ....). The size of this array must equal the number of rows in the matrix above 
