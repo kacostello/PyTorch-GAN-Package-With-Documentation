@@ -6,10 +6,10 @@ import math
 import numpy as np
 
 
-class SimpleGANTrainer(SuperTrainer.SuperTrainer):
+class ConditionalGANTrainer(SuperTrainer.SuperTrainer):
     def __init__(self, generator, discriminator, latent_space_function, random_from_dataset, g_loss, d_loss, g_opt,
-                 d_opt, device, tt=None, d_thresh=0.5):
-        """Class to train a simple GAN.
+                 d_opt, device, tt=None, d_thresh=0.5, num_input_variables=1, classes=1):
+        """Class to train a Conditional GAN.
         Generator and discriminator are torch model objects
         Latent_space_function(n) is a function which returns an array of n points from the latent space
         Random_from_dataset is a function which returns an array of n points from the real dataset
@@ -26,7 +26,7 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
                                            in_functions={"G": self.generator_input,
                                                          "D": self.discriminator_input},
                                            loss_functions={"G": g_loss, "D": d_loss},
-                                           opts={"G": g_opt, "D": d_opt})
+                                           opts={"G": g_opt, "D": d_opt}, classes=classes)
         self.stats["losses"] = {"G": [], "D": []}
         self.stats["epochs_trained"] = {"G": 0, "D": 0}
         self.stats["d_fpr"] = []
@@ -35,8 +35,14 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
 
         self.d_thresh = d_thresh
         self.device = device
+        self.num_input_variables = num_input_variables
 
-    def train(self, n_epochs, n_batch):
+    def train(self, n_epochs, n_batch, do_wass_viz=True):
+        # Make array to hold wass dist information by epoch
+        self.stats["W_Dist"] = {}
+        for class_num in range(self.classes):
+            self.stats["W_Dist"][class_num] = []
+
         for epoch in range(n_epochs):
             tt = self.totrain.next(self)  # Determine which model to train - sw will either be "D" or "G"
 
@@ -55,6 +61,19 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
             # Logging for visualizers
             self.stats["losses"][tt].append(mod_loss.item())
             self.stats["epochs_trained"][tt] += 1
+            if do_wass_viz:
+                for class_num in range(self.classes):
+                    # Obtain batch of fake data
+                    lat_space_data = self.generate_fake(class_num, self.num_input_variables, 500, self.device)
+                    fake_batch = self.eval_generator(lat_space_data)
+                    data_col = torch.arange(0, fake_batch.shape[1] - self.classes)
+                    striped_fake_batch = torch.index_select(fake_batch, 1, data_col)
+                    # Obtain batch of real data
+                    real_batch = self.dataset(500, self.device, class_num)
+                    striped_real_batch = torch.index_select(real_batch, 1, data_col)
+                    # Find and record the Wasserstein Distance
+                    was_dist = self.all_Wasserstein_dists(striped_fake_batch, striped_real_batch).mean()
+                    self.stats["W_Dist"][class_num].append(was_dist.item())
 
             y_flat = y.cpu().numpy().flatten()  # Calculate fPr, recall, precision
             mod_pred_flat = mod_pred.cpu().detach().numpy().flatten()
@@ -126,3 +145,10 @@ class SimpleGANTrainer(SuperTrainer.SuperTrainer):
         gen_out = self.models["G"](gen_in)
         y = torch.tensor([[1] for _ in range(n_batch)], device=self.device).float()
         return gen_out, y
+
+    def generate_fake(self, labelNum, num_input_variables, batch_size, device="cpu"):
+        data = torch.rand(batch_size, num_input_variables, device=device)
+        labels = torch.from_numpy(np.ones(batch_size).astype(int) * labelNum)
+        labels = func.one_hot(labels.to(torch.int64), num_classes=self.classes)
+        labels = labels.reshape(batch_size, self.classes)
+        return torch.cat((data, labels), 1)

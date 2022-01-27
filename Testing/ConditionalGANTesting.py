@@ -1,10 +1,11 @@
-from SimpleGANTrainer import SimpleGANTrainer
+from ConditionalGANTrainer import ConditionalGANTrainer
 from ToTrain import TwoFiveRule
 import torch
 import torch.nn as nn
 import torch.nn.functional as func
 import numpy as np
-import GetSpotifyData
+import Data.Spotify.GetSpotifyData as GetSpotifyData
+
 
 def lat_space(batch_size, dev="cpu"):
     data = torch.rand(batch_size, num_inputs, device=dev)
@@ -12,6 +13,7 @@ def lat_space(batch_size, dev="cpu"):
     labels = func.one_hot(labels, num_classes=num_classes)
     labels = labels.reshape(batch_size, num_classes)
     return torch.cat((data, labels), 1)
+
 
 def batch_from_data(batch_size=16, dev="cpu", label=-1):
     # check for labels or not
@@ -82,12 +84,13 @@ def print_output(out):
     print(out_labels)
 
 
-def get_gen_input(lableNum, batch_size, device="cpu"):
-    data = torch.rand(batch_size, num_inputs, device=device)
+def get_gen_input(lableNum, batch_size, dev="cpu"):
+    data = torch.rand(batch_size, num_inputs, device=dev)
     labels = torch.from_numpy(np.ones(batch_size).astype(int) * lableNum)
     labels = func.one_hot(labels.to(torch.int64), num_classes=num_classes)
     labels = labels.reshape(batch_size, num_classes)
     return torch.cat((data, labels), 1)
+
 
 # Data imports
 example_data, example_labels, maxDataValues = GetSpotifyData.spotify_data()
@@ -106,10 +109,10 @@ dis_loss = nn.BCELoss()
 sw = TwoFiveRule()
 device = input("Would you like to run this test on cpu or cuda? Type the one you wish to use: ")
 
-gan = SimpleGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, gen_opt, dis_opt,
-                       device, sw)
+gan = ConditionalGANTrainer(gen, dis, lat_space, batch_from_data, gen_loss, dis_loss, gen_opt, dis_opt,
+                            device, sw, num_input_variables=num_inputs, classes=num_classes)
 epochs = 7000
-gan.train(epochs, 16)
+gan.train(epochs, 16, do_wass_viz=True)
 output = gan.eval_generator(lat_space(16, "cpu"))
 print_output(output)
 
