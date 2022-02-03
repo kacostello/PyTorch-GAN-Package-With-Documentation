@@ -64,9 +64,9 @@ class ConditionalGANTrainer(SuperTrainer.SuperTrainer):
             if do_wass_viz:
                 for class_num in range(self.classes):
                     # Obtain batch of fake data
-                    lat_space_data = self.generate_fake(class_num, self.num_input_variables, 500, self.device)
+                    lat_space_data = self.generate_fake(class_num, self.num_input_variables, 500)
                     fake_batch = self.eval_generator(lat_space_data)
-                    data_col = torch.arange(0, fake_batch.shape[1] - self.classes)
+                    data_col = torch.arange(0, fake_batch.shape[1] - self.classes).to(self.device)
                     striped_fake_batch = torch.index_select(fake_batch, 1, data_col)
                     # Obtain batch of real data
                     real_batch = self.dataset(500, self.device, class_num)
@@ -146,9 +146,9 @@ class ConditionalGANTrainer(SuperTrainer.SuperTrainer):
         y = torch.tensor([[1] for _ in range(n_batch)], device=self.device).float()
         return gen_out, y
 
-    def generate_fake(self, labelNum, num_input_variables, batch_size, device="cpu"):
-        data = torch.rand(batch_size, num_input_variables, device=device)
-        labels = torch.from_numpy(np.ones(batch_size).astype(int) * labelNum)
+    def generate_fake(self, labelNum, num_input_variables, batch_size):
+        data = torch.rand(batch_size, num_input_variables, device=self.device)
+        labels = torch.from_numpy(np.ones(batch_size).astype(int) * labelNum).to(self.device)
         labels = func.one_hot(labels.to(torch.int64), num_classes=self.classes)
         labels = labels.reshape(batch_size, self.classes)
         return torch.cat((data, labels), 1)
