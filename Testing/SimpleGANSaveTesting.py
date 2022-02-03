@@ -82,3 +82,15 @@ assert gan == gan2
 print(gan2.eval_generator(lat_space(16, device)))
 gan2.train(700, 16)
 print(gan2.stats["epochs_trained"])
+
+gan3 = SimpleGANTrainer(Generator(), Discriminator(), lat_space, batch_from_data, None, None, torch.optim.Adam(gen.parameters(),
+                                                                                                               lr=0.001),
+                        torch.optim.Adam(dis.parameters(), lr=0.001), device, None)
+gan3.to_wass(0.001, 0.002)
+try:
+    gan3.soft_load(os.getcwd() + "/SAVETEST")
+except ValueError as e:
+    print(e)
+    print("(test was successful)")
+else:
+    raise NotImplementedError("gan3 shouldn't have been able to load properly!!!")

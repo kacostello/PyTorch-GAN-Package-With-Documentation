@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as func
 import math
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class ConditionalGANTrainer(SimpleGANTrainer.SimpleGANTrainer):
@@ -29,8 +30,8 @@ class ConditionalGANTrainer(SimpleGANTrainer.SimpleGANTrainer):
         for class_num in range(self.classes):
             self.stats["W_Dist"][class_num] = []
 
-    def do_viz(self, tt, y, mod_loss, mod_pred):
-        self.do_simple_viz(tt, y, mod_loss, mod_pred)
+    def do_viz(self, tt, y, mod_loss, mod_pred, w_dist_mean):
+        self.do_simple_viz(tt, y, mod_loss, mod_pred, w_dist_mean)
         self.wass_viz()
 
     def wass_viz(self):
@@ -54,3 +55,16 @@ class ConditionalGANTrainer(SimpleGANTrainer.SimpleGANTrainer):
         labels = func.one_hot(labels.to(torch.int64), num_classes=self.classes)
         labels = labels.reshape(batch_size, self.classes)
         return torch.cat((data, labels), 1)
+
+    def divergence_by_epoch(self):
+        ax = plt.subplot(111)
+        for the_class in range(self.classes):
+            plt.plot(list(range(1, len(self.stats["W_Dist"][the_class]) + 1)),
+                     self.stats["W_Dist"][the_class], label="Class: " + str(the_class))
+        plt.xlabel("Epochs")
+        plt.ylabel("Wasserstein Distance")
+        plt.title("Wasserstein Distance by Epochs")
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.show()

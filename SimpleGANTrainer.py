@@ -6,6 +6,8 @@ import math, os, pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import wasserstein_distance
+import torch.optim as optim
+
 
 
 class SimpleGANTrainer:
@@ -39,6 +41,7 @@ class SimpleGANTrainer:
 
         self.d_thresh = d_thresh
         self.device = device
+        self.flags = {"is_wass":False}
 
     def train(self, n_epochs, n_batch):
         for epoch in range(n_epochs):
@@ -56,17 +59,34 @@ class SimpleGANTrainer:
             self.models["D"].train()
             mod_loss = self.loss_functions[tt](mod_pred, y)
 
-            self.do_viz(tt, y, mod_loss, mod_pred)
-
             # Pytorch training steps
             self.optimizers[tt].zero_grad()
             mod_loss.backward()
             self.optimizers[tt].step()
 
-    def do_viz(self, tt, y, mod_loss, mod_pred):
-        self.do_simple_viz(tt, y, mod_loss, mod_pred)
+            if self.flags["is_wass"]:
+                if tt == "D":
+                    for p in self.models["D"].parameters():
+                        p.data.clamp_(-0.01, 0.01)
 
-    def do_simple_viz(self, tt, y, mod_loss, mod_pred):
+                w_dists = self.all_Wasserstein_dists(self.eval_generator(self.latent_space(256)), self.dataset(256))
+                w_dist_mean = torch.mean(w_dists)
+
+                self.do_viz(tt, y, mod_loss, mod_pred, w_dist_mean)
+            else:
+                self.do_viz(tt, y, mod_loss, mod_pred, None)
+
+    def to_wass(self, g_lr, d_lr):
+        g_opt = optim.RMSprop(self.models["G"].parameters(), g_lr)
+        d_opt = optim.RMSprop(self.models["D"].parameters(), d_lr)
+        self.optimizers = {"G": g_opt, "D": d_opt}
+        self.flags["is_wass"] = True
+        self.stats["wass_dists"] = []
+
+    def do_viz(self, tt, y, mod_loss, mod_pred, w_dist_mean):
+        self.do_simple_viz(tt, y, mod_loss, mod_pred, w_dist_mean)
+
+    def do_simple_viz(self, tt, y, mod_loss, mod_pred, w_dist_mean):
         # Logging for visualizers
         self.stats["losses"][tt].append(mod_loss.item())
         self.stats["epochs_trained"][tt] += 1
@@ -95,6 +115,9 @@ class SimpleGANTrainer:
             self.stats["d_precision"].append(tP / (tP + fP))
         if tP + fN > 0:
             self.stats["d_recall"].append(tP / (tP + fN))
+
+        if w_dist_mean is not None:
+            self.stats["wass_dists"].append(w_dist_mean)
 
     def eval_generator(self, in_dat):
         return self.eval("G", in_dat)
@@ -168,19 +191,6 @@ class SimpleGANTrainer:
         plt.title("Loss by Epochs")
         plt.show()
 
-    def divergence_by_epoch(self):
-        ax = plt.subplot(111)
-        for the_class in range(self.classes):
-            plt.plot(list(range(1, len(self.stats["W_Dist"][the_class]) + 1)),
-                     self.stats["W_Dist"][the_class], label="Class: " + str(the_class))
-        plt.xlabel("Epochs")
-        plt.ylabel("Wasserstein Distance")
-        plt.title("Wasserstein Distance by Epochs")
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.show()
-
     def epochs_trained(self, model):
         return self.stats["epochs_trained"][model]
 
@@ -196,6 +206,45 @@ class SimpleGANTrainer:
 
     def list_opts(self):
         return [n for n in self.optimizers]
+
+    def save_flags(self, path):
+        """Saves the trainer object's flags to folder at specified location. Creates folder if it does not exist.
+        Saves flags as a pickle, in format path/trainer_flags.ts. Not (yet) guaranteed to be compatible across different
+        versions!
+        WARNING: Will overwrite the existing trainer_flags file, if it exists."""
+        if not os.path.isdir(path):
+            os.mkdir(path)
+
+        f = open(path + "\\trainer_flags.ts", "wb")
+        pickle.dump(self.flags, f)
+        f.close()
+
+    def load_and_check_flags(self, path):
+        """Loads trainer flags dict from specified folder. Throws ValueError if path does not exist, or if
+        path/trainer_flags.ts does not exist. Requires the trainer object to already be instantiated. Will
+        overwrite the current trainer flags dict. Also, checks flags for compatibility.
+        Throws ValueError if the save's flags are incompatible with the trainer's current flags
+        WARNING: This load function uses pickle. *Only attempt to load from a trusted source.*"""
+        try:
+            assert os.path.isdir(path)
+        except AssertionError:
+            raise ValueError("No folder at " + path)
+
+        try:
+            assert os.path.isfile(path + "\\trainer_flags.ts")
+        except AssertionError:
+            raise ValueError("Cannot detect trainer flags dict at " + path)
+
+        f = open(path + "\\trainer_flags.ts", "rb")
+        newflags = pickle.load(f)
+        # Check for compat
+        if self.flags["is_wass"] != newflags["is_wass"]:
+            if self.flags["is_wass"]:
+                raise ValueError("Cannot load non-wasserstein checkpoint as a wasserstein trainer!")
+            else:
+                raise ValueError("Cannot load wasserstein checkpoint as a non-wasserstein trainer!")
+        self.flags = newflags
+        f.close()
 
     def save_model_state_dicts(self, path):
         """Saves the model state dicts to folder at specified location. Creates folder if it does not exist.
@@ -384,9 +433,10 @@ class SimpleGANTrainer:
         f.close()
 
     def soft_save(self, path):
-        """Saves all model state_dicts, the trainer's stat dict, all optimizer state_dicts,
+        """Saves all model state_dicts, the trainer's stat dict and flag dict, all optimizer state_dicts,
         all in_functions, and all loss_functions.
         Will overwrite previously saved dicts in same location!"""
+        self.save_flags(path)
         self.save_model_state_dicts(path)
         self.save_trainer_stats_dict(path)
         self.save_loss_functions(path)
@@ -395,12 +445,13 @@ class SimpleGANTrainer:
         self.save_to_train(path)
 
     def soft_load(self, path):
-        """Loads all model state_dicts and the trainer's stat dict.
+        """Loads all model state_dicts and the trainer's stat dict and flag dict.
         Note that this requires the loss functions and in functions to be defined in the current scope, or otherwise
         defined within a built-in module (if you're using a custom loss function, make sure to import the file where
         it's defined!). If you're using pytorch's built-in loss functions, and you have pytorch properly installed, you
         shouldn't need to import pytorch.
         WARNING: This load function uses pickle. *Only attempt to load from a trusted source.*"""
+        self.load_and_check_flags(path)
         self.load_model_state_dicts(path)
         self.load_trainer_state_dict(path)
         self.load_in_functions(path)
