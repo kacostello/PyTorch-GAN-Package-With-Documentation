@@ -1,4 +1,3 @@
-import SuperTrainer
 import ToTrain
 import torch
 import torch.nn.functional as func
