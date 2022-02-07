@@ -1,0 +1,11 @@
+site_name: Python GAN Package
+site_url: http://127.0.0.1:8000/
+nav:
+    - Home: index.md
+    - About: about.md
+    - Data Input: data_input.md
+    - Key User Features: features.md
+    - SuperTrainer: SuperTrainer.py.md
+    - SimpleGANTrainer: SimpleGANTrainer.py.md
+    - WassersteinGANTrainer: WassersteinGANTrainer.py.md
+theme: readthedocs
